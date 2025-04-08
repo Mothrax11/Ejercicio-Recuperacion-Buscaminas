@@ -187,8 +187,7 @@ function Buscaminas() {
                                 key={celdaIndex} 
                                 style={{ width: 30, height: 30, fontSize: 16, backgroundColor: celda.revelada ? '#ddd' : '#999' }} 
                                 onClick={() => revelarCasilla(filaIndex, celdaIndex)} 
-                                onContextMenu={(e) => ponerBandera(e, filaIndex, celdaIndex)}
-                            >
+                                onContextMenu={(e) => ponerBandera(e, filaIndex, celdaIndex)}>
                                 {celda.revelada ? celda.esBomba ? '💣' : celda.bombasCercanas || '' : celda.marcada ? '🚩' : ''}
                             </Button>
                         ))}
