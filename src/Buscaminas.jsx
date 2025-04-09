@@ -3,19 +3,12 @@ import { Button, Form } from 'react-bootstrap';
 
 function Buscaminas() {
     const [tablero, setTablero] = useState([]);
-    const [casillasRestantes, setCasillasRestantes] = useState(0);
+    const [casillasRestantes, setCasillasRestantes] = useState(1);
     const [juegoTerminado, setJuegoTerminado] = useState(false);
     const [tamañoTablero, setTamañoTablero] = useState(8);
     const [clickInicalHecho, setClickInicialHecho] = useState(false);
     const [minas, setMinas] = useState(10);
     const [inicioJuego, setInicioJuego] = useState(false);
-
-    const revisarVictoria = () => {
-        if (casillasRestantes === 0) {
-            setJuegoTerminado(true);
-            alert("¡Ganaste! 🎉");
-        }
-    };
 
     // Crear el tablero basado en el tamaño y las minas seleccionadas
     function crearTablero(primeraClickFila, primeraClickColumna) {
@@ -78,6 +71,49 @@ function Buscaminas() {
             setClickInicialHecho(true);
             setTablero(tablero);
             setCasillasRestantes(tamañoTablero * tamañoTablero - minas);
+
+        //Uso parte del codigo para revelarCasilla para que se haga aquí directamente la primera revelacion
+        //Intenté hacerlo haciendo una llamada pero no me funcionaba
+        const copia = copiarTablero(tablero);
+        const celdasARevisar = [[fila, columna]];
+        let nuevasReveladas = 0;
+
+        while (celdasARevisar.length > 0) {
+            const [f, c] = celdasARevisar.shift();
+            const celda = copia[f][c];
+
+            if (celda.revelada || celda.marcada) continue;
+
+            celda.revelada = true;
+            nuevasReveladas++;
+
+            if (celda.esBomba) {
+                setJuegoTerminado(true);
+                alert("¡Perdiste! 💣");
+                return;
+            }
+
+            if (celda.bombasCercanas === 0) {
+                for (let df = -1; df <= 1; df++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const nf = f + df;
+                        const nc = c + dc;
+                        if (nf >= 0 && nf < tamañoTablero && nc >= 0 && nc < tamañoTablero) {
+                            celdasARevisar.push([nf, nc]);
+                        }
+                    }
+                }
+            }
+        }
+
+        const restantes = tamañoTablero * tamañoTablero - minas - nuevasReveladas;
+        setCasillasRestantes(restantes);
+        setTablero(copia);
+
+        if (restantes === 0) {
+            setJuegoTerminado(true);
+            alert("¡Ganaste! 🎉");
+        }
         } else {
             revelarCasilla(fila,columna)
         }
@@ -118,6 +154,7 @@ function Buscaminas() {
 
         const nuevoTablero = copiarTablero(tablero);
         const celdasARevisar = [[fila, columna]];
+        let nuevasReveladas = 0;
 
         while (celdasARevisar.length > 0) {
             const [f, c] = celdasARevisar.shift();
@@ -126,7 +163,7 @@ function Buscaminas() {
             if (celda.revelada || celda.marcada) continue;
 
             celda.revelada = true;
-            setCasillasRestantes(casillasRestantes => casillasRestantes - 1);
+            nuevasReveladas++;
 
             if (celda.esBomba) {
                 setJuegoTerminado(true);
@@ -147,8 +184,14 @@ function Buscaminas() {
                 }
             }
         }
+        const totalRestantes = casillasRestantes - nuevasReveladas;
+        setCasillasRestantes(totalRestantes)
         setTablero(nuevoTablero);
-        revisarVictoria();
+
+        if (casillasRestantes === 0) {
+            setJuegoTerminado(true);
+            alert("¡Ganaste! 🎉");
+        }
     };
 
     const reiniciarJuego = () => {
@@ -161,9 +204,10 @@ function Buscaminas() {
 
     const iniciarJuego = () => {
         setInicioJuego(true);
-        const nuevoTablero = crearTablero(0, 0);
+        const nuevoTablero = crearTablero();
         setTablero(nuevoTablero);
-        setCasillasRestantes(tamañoTablero * tamañoTablero - minas);
+        setClickInicialHecho(false)
+        setJuegoTerminado(false)
     };
 
     if (!inicioJuego) {
@@ -199,24 +243,29 @@ function Buscaminas() {
 
     return (
         <>
-            <div>
-                {tablero.map((fila, filaIndex) => (
-                    <div key={filaIndex} style={{ display: 'flex' }}>
-                        {fila.map((celda, celdaIndex) => (
-                            <Button 
-                                key={celdaIndex} 
-                                style={{ width: 30, height: 30, fontSize: 16, backgroundColor: celda.revelada ? '#ddd' : '#999' }} 
-                                onClick={() => primerClickHandler(filaIndex, celdaIndex)} 
-                                onContextMenu={(e) => ponerBandera(e, filaIndex, celdaIndex)}>
-                                {celda.revelada ? celda.esBomba ? '💣' : celda.bombasCercanas || '' : celda.marcada ? '🚩' : ''}
-                            </Button>
-                        ))}
-                    </div>
-                ))}
-            </div>
-            <div>
-                <Button onClick={reiniciarJuego}>Reiniciar Juego</Button>
-            </div>
+            <header>
+                <h1 hidden={clickInicalHecho}>Haz doble click en una casilla para iniciar!</h1>
+            </header>
+            <body>
+                <div>
+                    {tablero.map((fila, filaIndex) => (
+                        <div key={filaIndex} style={{ display: 'flex' }}>
+                            {fila.map((celda, celdaIndex) => (
+                                <Button 
+                                    key={celdaIndex} 
+                                    style={{ width: 30, height: 30, fontSize: 16, backgroundColor: celda.revelada ? '#ddd' : '#999' }} 
+                                    onClick={() => primerClickHandler(filaIndex, celdaIndex)} 
+                                    onContextMenu={(e) => ponerBandera(e, filaIndex, celdaIndex)}>
+                                    {celda.revelada ? celda.esBomba ? '💣' : celda.bombasCercanas || '' : celda.marcada ? '🚩' : ''}
+                                </Button>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+                <div>
+                    <Button onClick={reiniciarJuego}>Reiniciar Juego</Button>
+                </div>
+            </body>
         </>
     );
 }
