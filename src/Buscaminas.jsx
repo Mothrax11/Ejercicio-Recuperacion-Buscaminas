@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { Button, Form } from 'react-bootstrap';
 
 function Buscaminas() {
@@ -6,6 +6,7 @@ function Buscaminas() {
     const [casillasRestantes, setCasillasRestantes] = useState(0);
     const [juegoTerminado, setJuegoTerminado] = useState(false);
     const [tamañoTablero, setTamañoTablero] = useState(8);
+    const [clickInicalHecho, setClickInicialHecho] = useState(false);
     const [minas, setMinas] = useState(10);
     const [inicioJuego, setInicioJuego] = useState(false);
 
@@ -63,6 +64,24 @@ function Buscaminas() {
         }
         return tablero;
     }
+
+    const primerClickHandler = (fila , columna) => {
+        if(clickInicalHecho == false){
+            let tablero;
+            do {
+                tablero = crearTablero(fila, columna);
+            } while (
+                tablero[fila][columna].esBomba || 
+                tablero[fila][columna].bombasCercanas !== 0
+            );
+            
+            setClickInicialHecho(true);
+            setTablero(tablero);
+            setCasillasRestantes(tamañoTablero * tamañoTablero - minas);
+        } else {
+            revelarCasilla(fila,columna)
+        }
+      }
 
     const copiarTablero = (tableroOriginal) => {
         const copia = [];
@@ -186,7 +205,7 @@ function Buscaminas() {
                             <Button 
                                 key={celdaIndex} 
                                 style={{ width: 30, height: 30, fontSize: 16, backgroundColor: celda.revelada ? '#ddd' : '#999' }} 
-                                onClick={() => revelarCasilla(filaIndex, celdaIndex)} 
+                                onClick={() => primerClickHandler(filaIndex, celdaIndex)} 
                                 onContextMenu={(e) => ponerBandera(e, filaIndex, celdaIndex)}>
                                 {celda.revelada ? celda.esBomba ? '💣' : celda.bombasCercanas || '' : celda.marcada ? '🚩' : ''}
                             </Button>
