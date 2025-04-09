@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form } from 'react-bootstrap';
 
 function Buscaminas() {
@@ -156,6 +156,7 @@ function Buscaminas() {
         setTablero(nuevoTablero);
         setJuegoTerminado(false);
         setCasillasRestantes(tamañoTablero * tamañoTablero - minas);
+        setClickInicialHecho(false)
     };
 
     const iniciarJuego = () => {
